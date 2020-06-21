@@ -43,7 +43,7 @@ static int BuildIdList(C& container, I* list, int listSize, F&& accept)
 
 
 //------------------------------------------------------------------------------
-ax::NodeEditor::EditorContext* ax::NodeEditor::CreateEditor(const Config* config)
+ax::NodeEditor::EditorContext* ax::NodeEditor::CreateEditor(const SConfig* config)
 {
     return reinterpret_cast<ax::NodeEditor::EditorContext*>(new ax::NodeEditor::Detail::EditorContext(config));
 }
@@ -68,17 +68,17 @@ ax::NodeEditor::EditorContext* ax::NodeEditor::GetCurrentEditor()
     return reinterpret_cast<ax::NodeEditor::EditorContext*>(s_Editor);
 }
 
-ax::NodeEditor::Style& ax::NodeEditor::GetStyle()
+ax::NodeEditor::SStyle& ax::NodeEditor::GetStyle()
 {
     return s_Editor->GetStyle();
 }
 
-const char* ax::NodeEditor::GetStyleColorName(StyleColor colorIndex)
+const char* ax::NodeEditor::GetStyleColorName(EStyleColor colorIndex)
 {
     return s_Editor->GetStyle().GetColorName(colorIndex);
 }
 
-void ax::NodeEditor::PushStyleColor(StyleColor colorIndex, const ImVec4& color)
+void ax::NodeEditor::PushStyleColor(EStyleColor colorIndex, const ImVec4& color)
 {
     s_Editor->GetStyle().PushColor(colorIndex, color);
 }

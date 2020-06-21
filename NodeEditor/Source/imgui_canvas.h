@@ -1,7 +1,5 @@
-﻿// Canvas widget - view over infinite virtual space.
+﻿// 画布 - 能够在无限的平面空间中查看
 //
-// Canvas allows you to draw your widgets anywhere over infinite space and provide
-// view over it with support for panning and scaling.
 //
 // When you enter a canvas ImGui is moved to virtual space which mean:
 //   - ImGui::GetCursorScreenPos() return (0, 0) and which correspond to top left corner
@@ -9,8 +7,8 @@
 //   - Mouse input is brought to canvas space, so widgets works as usual.
 //   - Everything you draw with ImDrawList will be in virtual space.
 //
-// By default origin point is on top left corner of canvas widget. It can be
-// changed with call to CanvasView() where you can specify what part of space
+// 画布默认的原点在左上角. It can be changed with call to CanvasView() 
+// where you can specify what part of space
 // should be viewed by setting viewport origin point and scale. Current state
 // can be queried with CanvasViewOrigin() and CanvasViewScale().
 //
@@ -51,6 +49,9 @@
 
 namespace ImGuiEx {
 
+/*
+* \@brief 
+*/
 struct CanvasView
 {
     ImVec2 Origin;
@@ -84,7 +85,7 @@ struct CanvasView
 // will be drawn on canvas plane. This behavior can be suspended
 // by calling Suspend() and resumed by calling Resume().
 //
-// Warning:
+// <Ghost#Mark> Warning:
 //     Please do not interleave canvas with use of channel splitter.
 //     Keep channel splitter contained inside canvas or always
 //     call canvas functions from same channel.
@@ -185,7 +186,7 @@ struct Canvas
     const ImVec2& ViewOrigin()  const { return m_View.Origin; }
 
     // Returns scale of the view.
-    float ViewScale() const { return m_View.Scale; }
+    const float ViewScale() const { return m_View.Scale; }
 
     // Returns true if canvas is suspended.
     //

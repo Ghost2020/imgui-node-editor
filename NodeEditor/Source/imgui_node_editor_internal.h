@@ -136,17 +136,17 @@ enum class ObjectType
 };
 
 using ax::NodeEditor::PinKind;
-using ax::NodeEditor::StyleColor;
+using ax::NodeEditor::EStyleColor;
 using ax::NodeEditor::StyleVar;
-using ax::NodeEditor::SaveReasonFlags;
+using ax::NodeEditor::ESaveReasonFlags;
 
 using ax::NodeEditor::NodeId;
 using ax::NodeEditor::PinId;
 using ax::NodeEditor::LinkId;
 
-struct ObjectId final: Details::SafePointerType<ObjectId>
+struct ObjectId final: Details::TSafePointerType<ObjectId>
 {
-    using Super = Details::SafePointerType<ObjectId>;
+    using Super = Details::TSafePointerType<ObjectId>;
     using Super::Super;
 
     ObjectId():                  Super(Invalid),              m_Type(ObjectType::None)   {}
@@ -483,7 +483,7 @@ struct NodeSettings
 
     bool            m_Saved;
     bool            m_IsDirty;
-    SaveReasonFlags m_DirtyReason;
+    ESaveReasonFlags m_DirtyReason;
 
     NodeSettings(NodeId id)
         : m_ID(id)
@@ -493,12 +493,12 @@ struct NodeSettings
         , m_WasUsed(false)
         , m_Saved(false)
         , m_IsDirty(false)
-        , m_DirtyReason(SaveReasonFlags::None)
+        , m_DirtyReason(ESaveReasonFlags::None)
     {
     }
 
     void ClearDirty();
-    void MakeDirty(SaveReasonFlags reason);
+    void MakeDirty(ESaveReasonFlags reason);
 
     json::value Serialize();
 
@@ -509,7 +509,7 @@ struct NodeSettings
 struct Settings
 {
     bool                 m_IsDirty;
-    SaveReasonFlags      m_DirtyReason;
+    ESaveReasonFlags      m_DirtyReason;
 
     vector<NodeSettings> m_Nodes;
     vector<ObjectId>     m_Selection;
@@ -518,7 +518,7 @@ struct Settings
 
     Settings()
         : m_IsDirty(false)
-        , m_DirtyReason(SaveReasonFlags::None)
+        , m_DirtyReason(ESaveReasonFlags::None)
         , m_ViewScroll(0, 0)
         , m_ViewZoom(1.0f)
     {
@@ -528,7 +528,7 @@ struct Settings
     NodeSettings* FindNode(NodeId id);
 
     void ClearDirty(Node* node = nullptr);
-    void MakeDirty(SaveReasonFlags reason, Node* node = nullptr);
+    void MakeDirty(ESaveReasonFlags reason, Node* node = nullptr);
 
     std::string Serialize();
 
@@ -1188,9 +1188,9 @@ struct HintBuilder
     ImDrawList* GetBackgroundDrawList();
 };
 
-struct Style: ax::NodeEditor::Style
+struct Style: ax::NodeEditor::SStyle
 {
-    void PushColor(StyleColor colorIndex, const ImVec4& color);
+    void PushColor(EStyleColor colorIndex, const ImVec4& color);
     void PopColor(int count = 1);
 
     void PushVar(StyleVar varIndex, float value);
@@ -1198,12 +1198,12 @@ struct Style: ax::NodeEditor::Style
     void PushVar(StyleVar varIndex, const ImVec4& value);
     void PopVar(int count = 1);
 
-    const char* GetColorName(StyleColor colorIndex) const;
+    const char* GetColorName(EStyleColor colorIndex) const;
 
 private:
     struct ColorModifier
     {
-        StyleColor  Index;
+        EStyleColor  Index;
         ImVec4      Value;
     };
 
@@ -1221,16 +1221,16 @@ private:
     vector<VarModifier>     m_VarStack;
 };
 
-struct Config: ax::NodeEditor::Config
+struct Config: ax::NodeEditor::SConfig
 {
-    Config(const ax::NodeEditor::Config* config);
+    Config(const ax::NodeEditor::SConfig* config);
 
     std::string Load();
     std::string LoadNode(NodeId nodeId);
 
     void BeginSave();
-    bool Save(const std::string& data, SaveReasonFlags flags);
-    bool SaveNode(NodeId nodeId, const std::string& data, SaveReasonFlags flags);
+    bool Save(const std::string& data, ESaveReasonFlags flags);
+    bool SaveNode(NodeId nodeId, const std::string& data, ESaveReasonFlags flags);
     void EndSave();
 };
 
@@ -1246,7 +1246,7 @@ inline SuspendFlags operator &(SuspendFlags lhs, SuspendFlags rhs) { return stat
 
 struct EditorContext
 {
-    EditorContext(const ax::NodeEditor::Config* config = nullptr);
+    EditorContext(const ax::NodeEditor::SConfig* config = nullptr);
     ~EditorContext();
 
     Style& GetStyle() { return m_Style; }
@@ -1309,8 +1309,8 @@ struct EditorContext
 
     bool IsActive();
 
-    void MakeDirty(SaveReasonFlags reason);
-    void MakeDirty(SaveReasonFlags reason, Node* node);
+    void MakeDirty(ESaveReasonFlags reason);
+    void MakeDirty(ESaveReasonFlags reason, Node* node);
 
     Pin*    CreatePin(PinId id, PinKind kind);
     Node*   CreateNode(NodeId id);
@@ -1354,8 +1354,8 @@ struct EditorContext
     ImRect GetSelectionBounds() { return GetBounds(m_SelectedObjects); }
     ImRect GetContentBounds() { return GetBounds(m_Nodes); }
 
-    ImU32 GetColor(StyleColor colorIndex) const;
-    ImU32 GetColor(StyleColor colorIndex, float alpha) const;
+    ImU32 GetColor(EStyleColor colorIndex) const;
+    ImU32 GetColor(EStyleColor colorIndex, float alpha) const;
 
     void NavigateTo(const ImRect& bounds, bool zoomIn = false, float duration = -1) { m_NavigateAction.NavigateTo(bounds, zoomIn, duration); }
 

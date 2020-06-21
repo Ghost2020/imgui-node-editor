@@ -28,7 +28,7 @@ const char* Application_GetName()
 
 void Application_Initialize()
 {
-    ed::Config config;
+    ed::SConfig config;
     config.SettingsFile = "BasicInteraction.json";
     g_Context = ed::CreateEditor(&config);
 }

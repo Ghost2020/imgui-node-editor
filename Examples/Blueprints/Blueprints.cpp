@@ -326,7 +326,7 @@ static Node* SpawnOutputActionNode()
 
 static Node* SpawnPrintStringNode()
 {
-    s_Nodes.emplace_back(GetNextId(), "Print String");
+    s_Nodes.emplace_back(GetNextId(), u8"Print Strings");
     s_Nodes.back().Inputs.emplace_back(GetNextId(), "", PinType::Flow);
     s_Nodes.back().Inputs.emplace_back(GetNextId(), "In String", PinType::String);
     s_Nodes.back().Outputs.emplace_back(GetNextId(), "", PinType::Flow);
@@ -489,7 +489,7 @@ const char* Application_GetName()
 
 void Application_Initialize()
 {
-    ed::Config config;
+    ed::SConfig config;
 
     config.SettingsFile = "Blueprints.json";
 
@@ -504,7 +504,7 @@ void Application_Initialize()
         return node->State.size();
     };
 
-    config.SaveNodeSettings = [](ed::NodeId nodeId, const char* data, size_t size, ed::SaveReasonFlags reason, void* userPointer) -> bool
+    config.SaveNodeSettings = [](ed::NodeId nodeId, const char* data, size_t size, ed::ESaveReasonFlags reason, void* userPointer) -> bool
     {
         auto node = FindNode(nodeId);
         if (!node)
@@ -646,7 +646,7 @@ void ShowStyleEditor(bool* show = nullptr)
     ImGui::TextUnformatted("Values");
     ImGui::Spring();
     if (ImGui::Button("Reset to defaults"))
-        editorStyle = ed::Style();
+        editorStyle = ed::SStyle();
     ImGui::EndHorizontal();
     ImGui::Spacing();
     ImGui::DragFloat4("Node Padding", &editorStyle.NodePadding.x, 0.1f, 0.0f, 40.0f);
@@ -694,7 +694,7 @@ void ShowStyleEditor(bool* show = nullptr)
     ImGui::PushItemWidth(-160);
     for (int i = 0; i < ed::StyleColor_Count; ++i)
     {
-        auto name = ed::GetStyleColorName((ed::StyleColor)i);
+        auto name = ed::GetStyleColorName((ed::EStyleColor)i);
         if (!filter.PassFilter(name))
             continue;
 

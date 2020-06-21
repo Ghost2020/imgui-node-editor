@@ -1007,7 +1007,7 @@ ImRect ed::Link::GetBounds() const
 // Editor Context
 //
 //------------------------------------------------------------------------------
-ed::EditorContext::EditorContext(const ax::NodeEditor::Config* config)
+ed::EditorContext::EditorContext(const ax::NodeEditor::SConfig* config)
     : m_IsFirstFrame(true)
     , m_IsWindowActive(false)
     , m_ShortcutsEnabled(true)
@@ -1263,7 +1263,7 @@ void ed::EditorContext::End()
     }
 
     // Sort nodes if bounds of node changed
-    if (sortGroups || ((m_Settings.m_DirtyReason & (SaveReasonFlags::Position | SaveReasonFlags::Size)) != SaveReasonFlags::None))
+    if (sortGroups || ((m_Settings.m_DirtyReason & (ESaveReasonFlags::Position | ESaveReasonFlags::Size)) != ESaveReasonFlags::None))
     {
         // Bring all groups before regular nodes
         auto groupsItEnd = std::stable_partition(m_Nodes.begin(), m_Nodes.end(), IsGroup);
@@ -1447,7 +1447,7 @@ void ed::EditorContext::End()
     }
 
     if (HasSelectionChanged())
-        MakeDirty(SaveReasonFlags::Selection);
+        MakeDirty(ESaveReasonFlags::Selection);
 
     if (m_Settings.m_IsDirty && !m_CurrentAction)
         SaveSettings();
@@ -1493,7 +1493,7 @@ void ed::EditorContext::SetNodePosition(NodeId nodeId, const ImVec2& position)
     {
         node->m_Bounds.Translate(position - node->m_Bounds.Min);
         node->m_Bounds.Floor();
-        MakeDirty(NodeEditor::SaveReasonFlags::Position, node);
+        MakeDirty(NodeEditor::ESaveReasonFlags::Position, node);
     }
 }
 
@@ -1888,12 +1888,12 @@ void ed::EditorContext::SaveSettings()
     m_Config.EndSave();
 }
 
-void ed::EditorContext::MakeDirty(SaveReasonFlags reason)
+void ed::EditorContext::MakeDirty(ESaveReasonFlags reason)
 {
     m_Settings.MakeDirty(reason);
 }
 
-void ed::EditorContext::MakeDirty(SaveReasonFlags reason, Node* node)
+void ed::EditorContext::MakeDirty(ESaveReasonFlags reason, Node* node)
 {
     m_Settings.MakeDirty(reason, node);
 }
@@ -1907,12 +1907,12 @@ ed::Link* ed::EditorContext::FindLinkAt(const ImVec2& p)
     return nullptr;
 }
 
-ImU32 ed::EditorContext::GetColor(StyleColor colorIndex) const
+ImU32 ed::EditorContext::GetColor(EStyleColor colorIndex) const
 {
     return ImColor(m_Style.Colors[colorIndex]);
 }
 
-ImU32 ed::EditorContext::GetColor(StyleColor colorIndex, float alpha) const
+ImU32 ed::EditorContext::GetColor(EStyleColor colorIndex, float alpha) const
 {
     auto color = m_Style.Colors[colorIndex];
     return ImColor(color.x, color.y, color.z, color.w * alpha);
@@ -2231,10 +2231,10 @@ void ed::EditorContext::ShowMetrics(const Control& control)
 void ed::NodeSettings::ClearDirty()
 {
     m_IsDirty     = false;
-    m_DirtyReason = SaveReasonFlags::None;
+    m_DirtyReason = ESaveReasonFlags::None;
 }
 
-void ed::NodeSettings::MakeDirty(SaveReasonFlags reason)
+void ed::NodeSettings::MakeDirty(ESaveReasonFlags reason)
 {
     m_IsDirty     = true;
     m_DirtyReason = m_DirtyReason | reason;
@@ -2331,14 +2331,14 @@ void ed::Settings::ClearDirty(Node* node)
     else
     {
         m_IsDirty     = false;
-        m_DirtyReason = SaveReasonFlags::None;
+        m_DirtyReason = ESaveReasonFlags::None;
 
         for (auto& knownNode : m_Nodes)
             knownNode.ClearDirty();
     }
 }
 
-void ed::Settings::MakeDirty(SaveReasonFlags reason, Node* node)
+void ed::Settings::MakeDirty(ESaveReasonFlags reason, Node* node)
 {
     m_IsDirty     = true;
     m_DirtyReason = m_DirtyReason | reason;
@@ -2606,14 +2606,14 @@ void ed::NavigateAnimation::OnUpdate(float progress)
 
 void ed::NavigateAnimation::OnStop()
 {
-    Editor->MakeDirty(SaveReasonFlags::Navigation);
+    Editor->MakeDirty(ESaveReasonFlags::Navigation);
 }
 
 void ed::NavigateAnimation::OnFinish()
 {
     Action.SetViewRect(m_Target);
 
-    Editor->MakeDirty(SaveReasonFlags::Navigation);
+    Editor->MakeDirty(ESaveReasonFlags::Navigation);
 }
 
 
@@ -2955,7 +2955,7 @@ bool ed::NavigateAction::Process(const Control& control)
     else
     {
         if (m_Scroll != m_ScrollStart)
-            Editor->MakeDirty(SaveReasonFlags::Navigation);
+            Editor->MakeDirty(ESaveReasonFlags::Navigation);
 
         m_IsActive = false;
     }
@@ -3002,7 +3002,7 @@ bool ed::NavigateAction::HandleZoom(const Control& control)
         m_Scroll = savedScroll;
         m_Zoom = savedZoom;
 
-        Editor->MakeDirty(SaveReasonFlags::Navigation);
+        Editor->MakeDirty(ESaveReasonFlags::Navigation);
     }
 
     auto targetRect = m_Canvas.CalcViewRect(ImGuiEx::CanvasView(-targetScroll, newZoom));
@@ -3099,7 +3099,7 @@ void ed::NavigateAction::StopMoveOverEdge()
 {
     if (m_MovingOverEdge)
     {
-        Editor->MakeDirty(SaveReasonFlags::Navigation);
+        Editor->MakeDirty(ESaveReasonFlags::Navigation);
 
         m_MoveOffset     = ImVec2(0, 0);
         m_MovingOverEdge = false;
@@ -3252,10 +3252,10 @@ bool ed::SizeAction::Process(const Control& control)
         m_Clean = false;
 
         if (m_SizedNode->m_Bounds.Min != m_StartBounds.Min || m_SizedNode->m_GroupBounds.Min != m_StartGroupBounds.Min)
-            Editor->MakeDirty(SaveReasonFlags::Position | SaveReasonFlags::User, m_SizedNode);
+            Editor->MakeDirty(ESaveReasonFlags::Position | ESaveReasonFlags::User, m_SizedNode);
 
         if (m_SizedNode->m_Bounds.GetSize() != m_StartBounds.GetSize() || m_SizedNode->m_GroupBounds.GetSize() != m_StartGroupBounds.GetSize())
-            Editor->MakeDirty(SaveReasonFlags::Size | SaveReasonFlags::User, m_SizedNode);
+            Editor->MakeDirty(ESaveReasonFlags::Size | ESaveReasonFlags::User, m_SizedNode);
 
         m_SizedNode = nullptr;
     }
@@ -3444,7 +3444,7 @@ bool ed::DragAction::Process(const Control& control)
         for (auto object : m_Objects)
         {
             if (object->EndDrag())
-                Editor->MakeDirty(SaveReasonFlags::Position | SaveReasonFlags::User, object->AsNode());
+                Editor->MakeDirty(ESaveReasonFlags::Position | ESaveReasonFlags::User, object->AsNode());
         }
 
         m_Objects.resize(0);
@@ -4695,14 +4695,14 @@ void ed::NodeBuilder::Begin(NodeId nodeId)
                 {
                     node->m_Bounds.Translate(ImFloor(offset));
                     node->m_GroupBounds.Translate(ImFloor(offset));
-                    Editor->MakeDirty(SaveReasonFlags::Position | SaveReasonFlags::User, node);
+                    Editor->MakeDirty(ESaveReasonFlags::Position | ESaveReasonFlags::User, node);
                 }
             }
             else
             {
                 m_CurrentNode->m_Bounds.Translate(ImFloor(offset));
                 m_CurrentNode->m_GroupBounds.Translate(ImFloor(offset));
-                Editor->MakeDirty(SaveReasonFlags::Position | SaveReasonFlags::User, m_CurrentNode);
+                Editor->MakeDirty(ESaveReasonFlags::Position | ESaveReasonFlags::User, m_CurrentNode);
             }
         }
 
@@ -4781,7 +4781,7 @@ void ed::NodeBuilder::End()
     if (m_CurrentNode->m_Bounds.GetSize() != m_NodeRect.GetSize())
     {
         m_CurrentNode->m_Bounds.Max = m_CurrentNode->m_Bounds.Min + m_NodeRect.GetSize();
-        Editor->MakeDirty(SaveReasonFlags::Size, m_CurrentNode);
+        Editor->MakeDirty(ESaveReasonFlags::Size, m_CurrentNode);
     }
 
     if (m_IsGroup)
@@ -5071,7 +5071,7 @@ ImDrawList* ed::HintBuilder::GetBackgroundDrawList()
 // Style
 //
 //------------------------------------------------------------------------------
-void ed::Style::PushColor(StyleColor colorIndex, const ImVec4& color)
+void ed::Style::PushColor(EStyleColor colorIndex, const ImVec4& color)
 {
     ColorModifier modifier;
     modifier.Index = colorIndex;
@@ -5140,7 +5140,7 @@ void ed::Style::PopVar(int count)
     }
 }
 
-const char* ed::Style::GetColorName(StyleColor colorIndex) const
+const char* ed::Style::GetColorName(EStyleColor colorIndex) const
 {
     switch (colorIndex)
     {
@@ -5224,10 +5224,10 @@ ImVec4* ed::Style::GetVarVec4Addr(StyleVar idx)
 // Config
 //
 //------------------------------------------------------------------------------
-ed::Config::Config(const ax::NodeEditor::Config* config)
+ed::Config::Config(const ax::NodeEditor::SConfig* config)
 {
     if (config)
-        *static_cast<ax::NodeEditor::Config*>(this) = *config;
+        *static_cast<ax::NodeEditor::SConfig*>(this) = *config;
 }
 
 std::string ed::Config::Load()
@@ -5283,7 +5283,7 @@ void ed::Config::BeginSave()
         BeginSaveSession(UserPointer);
 }
 
-bool ed::Config::Save(const std::string& data, SaveReasonFlags flags)
+bool ed::Config::Save(const std::string& data, ESaveReasonFlags flags)
 {
     if (SaveSettings)
     {
@@ -5301,7 +5301,7 @@ bool ed::Config::Save(const std::string& data, SaveReasonFlags flags)
     return false;
 }
 
-bool ed::Config::SaveNode(NodeId nodeId, const std::string& data, SaveReasonFlags flags)
+bool ed::Config::SaveNode(NodeId nodeId, const std::string& data, ESaveReasonFlags flags)
 {
     if (SaveNodeSettings)
         return SaveNodeSettings(nodeId, data.c_str(), data.size(), flags, UserPointer);

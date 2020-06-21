@@ -30,7 +30,7 @@ struct PinId;
 
 
 //------------------------------------------------------------------------------
-enum class SaveReasonFlags: uint32_t
+enum class ESaveReasonFlags: uint32_t
 {
     None       = 0x00000000,
     Navigation = 0x00000001,
@@ -40,18 +40,18 @@ enum class SaveReasonFlags: uint32_t
     User       = 0x00000010
 };
 
-inline SaveReasonFlags operator |(SaveReasonFlags lhs, SaveReasonFlags rhs) { return static_cast<SaveReasonFlags>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs)); }
-inline SaveReasonFlags operator &(SaveReasonFlags lhs, SaveReasonFlags rhs) { return static_cast<SaveReasonFlags>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs)); }
+inline ESaveReasonFlags operator |(ESaveReasonFlags lhs, ESaveReasonFlags rhs) { return static_cast<ESaveReasonFlags>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs)); }
+inline ESaveReasonFlags operator &(ESaveReasonFlags lhs, ESaveReasonFlags rhs) { return static_cast<ESaveReasonFlags>(static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs)); }
 
-using ConfigSaveSettings     = bool   (*)(const char* data, size_t size, SaveReasonFlags reason, void* userPointer);
+using ConfigSaveSettings     = bool   (*)(const char* data, size_t size, ESaveReasonFlags reason, void* userPointer);
 using ConfigLoadSettings     = size_t (*)(char* data, void* userPointer);
 
-using ConfigSaveNodeSettings = bool   (*)(NodeId nodeId, const char* data, size_t size, SaveReasonFlags reason, void* userPointer);
+using ConfigSaveNodeSettings = bool   (*)(NodeId nodeId, const char* data, size_t size, ESaveReasonFlags reason, void* userPointer);
 using ConfigLoadNodeSettings = size_t (*)(NodeId nodeId, char* data, void* userPointer);
 
 using ConfigSession          = void   (*)(void* userPointer);
 
-struct Config
+struct SConfig
 {
     const char*             SettingsFile;
     ConfigSession           BeginSaveSession;
@@ -62,7 +62,7 @@ struct Config
     ConfigLoadNodeSettings  LoadNodeSettings;
     void*                   UserPointer;
 
-    Config()
+    SConfig()
         : SettingsFile("NodeEditor.json")
         , BeginSaveSession(nullptr)
         , EndSaveSession(nullptr)
@@ -77,7 +77,7 @@ struct Config
 
 
 //------------------------------------------------------------------------------
-enum class PinKind
+enum struct PinKind : uint8_t
 {
     Input,
     Output
@@ -85,7 +85,7 @@ enum class PinKind
 
 
 //------------------------------------------------------------------------------
-enum StyleColor
+enum EStyleColor
 {
     StyleColor_Bg,
     StyleColor_Grid,
@@ -136,7 +136,7 @@ enum StyleVar
     StyleVar_GroupBorderWidth,
 };
 
-struct Style
+struct SStyle
 {
     ImVec4  NodePadding;
     float   NodeRounding;
@@ -163,7 +163,7 @@ struct Style
     float   GroupBorderWidth;
     ImVec4  Colors[StyleColor_Count];
 
-    Style()
+    SStyle()
     {
         NodePadding             = ImVec4(8, 8, 8, 8);
         NodeRounding            = 12.0f;
@@ -218,13 +218,13 @@ struct EditorContext;
 //------------------------------------------------------------------------------
 void SetCurrentEditor(EditorContext* ctx);
 EditorContext* GetCurrentEditor();
-EditorContext* CreateEditor(const Config* config = nullptr);
+EditorContext* CreateEditor(const SConfig* config = nullptr);
 void DestroyEditor(EditorContext* ctx);
 
-Style& GetStyle();
-const char* GetStyleColorName(StyleColor colorIndex);
+SStyle& GetStyle();
+const char* GetStyleColorName(EStyleColor colorIndex);
 
-void PushStyleColor(StyleColor colorIndex, const ImVec4& color);
+void PushStyleColor(EStyleColor colorIndex, const ImVec4& color);
 void PopStyleColor(int count = 1);
 
 void PushStyleVar(StyleVar varIndex, float value);
@@ -342,35 +342,23 @@ ImVec2 CanvasToScreen(const ImVec2& pos);
 
 
 
-
-
-
-
-
-
-
 //------------------------------------------------------------------------------
 namespace Details {
 
 template <typename T, typename Tag>
-struct SafeType
+struct TSafeType
 {
-    SafeType(T t)
+    TSafeType(T t)
         : m_Value(std::move(t))
     {
     }
 
-    SafeType(const SafeType&) = default;
+    TSafeType(const TSafeType&) = default;
 
     template <typename T2, typename Tag2>
-    SafeType(
-        const SafeType
-        <
-            typename std::enable_if<!std::is_same<T, T2>::value, T2>::type,
-            typename std::enable_if<!std::is_same<Tag, Tag2>::value, Tag2>::type
-        >&) = delete;
+    TSafeType(const TSafeType< typename std::enable_if<!std::is_same<T, T2>::value, T2>::type, typename std::enable_if<!std::is_same<Tag, Tag2>::value, Tag2>::type >&) = delete;
 
-    SafeType& operator=(const SafeType&) = default;
+    TSafeType& operator=(const TSafeType&) = default;
 
     explicit operator T() const { return Get(); }
 
@@ -382,54 +370,53 @@ private:
 
 
 template <typename Tag>
-struct SafePointerType
-    : SafeType<uintptr_t, Tag>
+struct TSafePointerType : TSafeType<uintptr_t, Tag>
 {
     static const Tag Invalid;
 
-    using SafeType<uintptr_t, Tag>::SafeType;
+    using TSafeType<uintptr_t, Tag>::TSafeType;
 
-    SafePointerType()
-        : SafePointerType(Invalid)
+    TSafePointerType()
+        : TSafePointerType(Invalid)
     {
     }
 
-    template <typename T = void> explicit SafePointerType(T* ptr): SafePointerType(reinterpret_cast<uintptr_t>(ptr)) {}
+    template <typename T = void> explicit TSafePointerType(T* ptr): TSafePointerType(reinterpret_cast<uintptr_t>(ptr)) {}
     template <typename T = void> T* AsPointer() const { return reinterpret_cast<T*>(this->Get()); }
 
     explicit operator bool() const { return *this != Invalid; }
 };
 
 template <typename Tag>
-const Tag SafePointerType<Tag>::Invalid = { 0 };
+const Tag TSafePointerType<Tag>::Invalid = { 0 };
 
 template <typename Tag>
-inline bool operator==(const SafePointerType<Tag>& lhs, const SafePointerType<Tag>& rhs)
+inline bool operator==(const TSafePointerType<Tag>& lhs, const TSafePointerType<Tag>& rhs)
 {
     return lhs.Get() == rhs.Get();
 }
 
 template <typename Tag>
-inline bool operator!=(const SafePointerType<Tag>& lhs, const SafePointerType<Tag>& rhs)
+inline bool operator!=(const TSafePointerType<Tag>& lhs, const TSafePointerType<Tag>& rhs)
 {
     return lhs.Get() != rhs.Get();
 }
 
 } // namespace Details
 
-struct NodeId final: Details::SafePointerType<NodeId>
+struct NodeId final: Details::TSafePointerType<NodeId>
 {
-    using SafePointerType::SafePointerType;
+    using TSafePointerType::TSafePointerType;
 };
 
-struct LinkId final: Details::SafePointerType<LinkId>
+struct LinkId final: Details::TSafePointerType<LinkId>
 {
-    using SafePointerType::SafePointerType;
+    using TSafePointerType::TSafePointerType;
 };
 
-struct PinId final: Details::SafePointerType<PinId>
+struct PinId final: Details::TSafePointerType<PinId>
 {
-    using SafePointerType::SafePointerType;
+    using TSafePointerType::TSafePointerType;
 };
 
 

@@ -52,7 +52,7 @@ static HRESULT CreateDeviceD3D(HWND hWnd)
         sd.BufferDesc.Width = 0;
         sd.BufferDesc.Height = 0;
         sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        sd.BufferDesc.RefreshRate.Numerator = 60;
+        sd.BufferDesc.RefreshRate.Numerator = 30;   /* modified by Ghost Chen {60 -> 30}*/
         sd.BufferDesc.RefreshRate.Denominator = 1;
         sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
         sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -133,6 +133,7 @@ static ImFont* ImGui_LoadFont(ImFontAtlas& atlas, const char* name, float size, 
 
     auto path = std::string(windir) + "\\Fonts\\" + name;
     auto font = atlas.AddFontFromFileTTF(path.c_str(), size, &config, ranges);
+    
     if (font)
         font->DisplayOffset = displayOffset;
 
@@ -201,7 +202,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         return 1;
 
     ImFontAtlas fontAtlas;
-    auto defaultFont = ImGui_LoadFont(fontAtlas, "segoeui.ttf", 22.0f);//16.0f * 96.0f / 72.0f);
+    auto defaultFont = ImGui_LoadFont(fontAtlas, "simsun.ttc", 22.0f);//16.0f * 96.0f / 72.0f);
     fontAtlas.Build();
     //ImGuiFreeType::BuildFontAtlas(&fontAtlas);
 
@@ -209,6 +210,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     ImGui::CreateContext(&fontAtlas);
     AX_SCOPE_EXIT{ ImGui::DestroyContext(); };
     ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->GetGlyphRangesChineseSimplifiedCommon();
+    io.Fonts->GetGlyphRangesChineseFull();
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
     io.IniFilename = nullptr;
     io.LogFilename = nullptr;
